@@ -82,6 +82,18 @@ static void IRAM_ATTR drdy_interrupt_handler() {
 
 
 void setup() {
+#ifdef TOP_DEBUG   
+#ifdef HW_REV_B 
+	Serial.begin();
+#else 
+	Serial.begin(115200);
+#endif
+	delay(100);
+	Serial.println("\n\n========================================");
+	Serial.println("   ESP32 OLED BMP280 VARIO STARTING    ");
+	Serial.println("========================================");
+#endif
+
 #if pinPCCA >= 0
 	pinMode(pinPCCA, INPUT_PULLUP); //  Program/Configure/Calibrate/Audio Mute Button
 #endif
@@ -93,8 +105,10 @@ void setup() {
 	pinMode(pinPwrSens, INPUT); // to detect  power-off button press
 #endif
 
+#if pinLED >= 0
 	pinMode(pinLED, OUTPUT); // power/bluetooth LED
 	LED_OFF();
+#endif
 #if pinAudioEn >= 0
 	pinMode(pinAudioEn, OUTPUT_OPEN_DRAIN); // output enable for 74HC240, active low
 	digitalWrite(pinAudioEn, HIGH);
@@ -102,19 +116,9 @@ void setup() {
 
 	wifi_off(); // turn off radio to save power
 
-#ifdef TOP_DEBUG   
-#ifdef HW_REV_B 
-	// Serial print redirected to USB CDC port (on Ubuntu, shows up as /dev/ttyACMx)
-	Serial.begin();
-#else 
-	// Serial print to uart port
-	Serial.begin(115200);
-#endif
-#endif
-
+#if pinPwrCtrl >= 0
 	// PWR button needs to be pressed for one second to switch on
 	delay(1000);
-#if pinPwrCtrl >= 0
 	digitalWrite(pinPwrCtrl, HIGH);
 #endif
 	LED_ON();
@@ -129,7 +133,7 @@ void setup() {
 		display_show_boot(FwRevision);
 	}
 
-	dbg_printf(("\n\nESP32 BLUETOOTH VARIO compiled on %s at %s\n", __DATE__, __TIME__));
+	dbg_printf(("\nESP32 BLUETOOTH VARIO compiled on %s at %s\n", __DATE__, __TIME__));
 	dbg_printf(("Firmware Revision %s\n", FwRevision));
 
 	dbg_println(("\nLoad non-volatile configuration and calibration data from flash"));  
@@ -266,18 +270,21 @@ static void pwr_ctrl_task(void* pvParameter){
 
 
 static void wifi_config_task(void * pvParameter) {
-	if (!LittleFS.begin()){
-		dbg_println(("Error mounting LittleFS, restarting..."));
-		delay(1000);
-		ESP.restart();
-		}   
+	if (!LittleFS.begin(true)){
+		dbg_println(("Warning: Error mounting LittleFS with formatOnFail"));
+	} else {
+		dbg_println(("LittleFS mounted successfully"));
+	}
 	wificfg_ap_server_init(); 
+	if (IsDisplayDetected) {
+		display_show_wifi("ESP32-VARIO", "192.168.4.1", "/update");
+	}
 	while (1) {
 		wificfg_loop();
 		vTaskDelay(10 / portTICK_PERIOD_MS);
-		}
-	vTaskDelete(NULL);
 	}
+	vTaskDelete(NULL);
+}
 
 
 static void vario_task(void * pvParameter) {

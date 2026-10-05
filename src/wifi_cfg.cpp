@@ -34,10 +34,9 @@ static void css_handler(AsyncWebServerRequest *request);
 
 	
 void wifi_off() {
-    WiFi.mode(WIFI_MODE_NULL);
-    esp_wifi_stop();
-    delay(100);
-    }
+    WiFi.mode(WIFI_OFF);
+    delay(50);
+}
   
 
 // Replace %xx% placeholder 
@@ -178,8 +177,6 @@ static void wifi_start_as_station() {
 	}
 
 void wificfg_ap_server_init() {
-    esp_wifi_start();  
-    delay(100);
 	if (Config.cred.ssid == "") {
 		wifi_start_as_ap();
 		}

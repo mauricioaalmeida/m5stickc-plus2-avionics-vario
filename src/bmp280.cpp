@@ -65,7 +65,9 @@ bool BMP280::init(int pinCS, int pinSCK, int pinMOSI, int pinMISO) {
 
     pinMode(_cs, OUTPUT);
     digitalWrite(_cs, HIGH);
+    pinMode(_miso, INPUT_PULLUP);
 
+    dbg_printf(("BMP280 init SPI: CS=%d, SCK=%d, MOSI=%d, MISO=%d\n", _cs, _sck, _mosi, _miso));
     BmpSPI.begin(_sck, _miso, _mosi, _cs);
     delay(20);
 

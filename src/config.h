@@ -86,9 +86,9 @@
 #define pinBMP280_MOSI  26
 #define pinBMP280_MISO  25
 
-#define pinLED		2	// Onboard Blue LED on ESP-WROOM-32
+#define pinLED		-1	// Disabled to prevent strapping conflicts with GPIO 2
 
-// Integrated OLED I2C (auto-probes 5/4, 21/22, 4/15)
+// Integrated OLED I2C (auto-probes 5/4, 21/22)
 #ifndef OLED_PIN_SDA
 #define OLED_PIN_SDA 5
 #endif
@@ -116,8 +116,13 @@
 #define BTN_PCCA()  (digitalRead(pinPCCA) == HIGH ? 1 : 0)
 #endif
 
+#if (pinLED >= 0)
 #define LED_ON() 	{digitalWrite(pinLED, 0); LEDState = 1;}
 #define LED_OFF() 	{digitalWrite(pinLED, 1); LEDState = 0;}
+#else
+#define LED_ON() 	{LEDState = 1;}
+#define LED_OFF() 	{LEDState = 0;}
+#endif
 
 #define PWR_ON_DELAY_MS		1000UL
 #define PWR_OFF_DELAY_MS	2000UL

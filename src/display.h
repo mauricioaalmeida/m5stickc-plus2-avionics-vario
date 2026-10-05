@@ -18,6 +18,7 @@ void display_update(int32_t altM, int32_t climbrateCps, float batteryV, bool ble
 void display_show_boot(const char* fwRev);
 void display_show_calibration(const char* title, int countdownSecs, int progressPercent);
 void display_show_message(const char* title, const char* msg);
+void display_show_wifi(const char* ssid, const char* ip, const char* url);
 void display_clear();
 void display_power_off();
 

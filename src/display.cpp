@@ -216,10 +216,8 @@ bool display_init() {
     };
 
     const I2CPair candidatePins[] = {
-        { OLED_PIN_SDA, OLED_PIN_SCL, 16 }, // Configured pins
-        { 5, 4, 16 },                       // Wemos Lolin ESP32 OLED standard (SDA 5, SCL 4, RST 16)
-        { 21, 22, -1 },                     // Standard ESP32 I2C / TTGO OLED
-        { 4, 15, 16 }                       // Heltec WiFi Kit 32 (SDA 4, SCL 15, RST 16)
+        { OLED_PIN_SDA, OLED_PIN_SCL, OLED_PIN_RST }, // Configured pins (e.g. SDA 5, SCL 4, RST -1)
+        { 21, 22, -1 }                                 // Standard ESP32 fallback (Wire default)
     };
 
     IsDisplayDetected = false;
@@ -229,7 +227,7 @@ bool display_init() {
         int scl = candidatePins[i].scl;
         int rst = candidatePins[i].rst;
 
-        // Hardware Reset pulse if OLED has a dedicated reset pin (common on integrated boards)
+        // Hardware Reset pulse only if OLED has a dedicated reset pin configured
         if (rst >= 0) {
             pinMode(rst, OUTPUT);
             digitalWrite(rst, LOW);
@@ -238,6 +236,7 @@ bool display_init() {
             delay(15);
         }
 
+        Serial.printf("[DISPLAY] Probing I2C bus: SDA=%d, SCL=%d...\n", sda, scl);
         Wire.begin(sda, scl, (uint32_t)OLED_I2C_FREQ);
         delay(25);
 
@@ -246,6 +245,7 @@ bool display_init() {
         if (Wire.endTransmission() == 0) {
             DisplayI2CAddr = SSD1306_ADDR_1;
             IsDisplayDetected = true;
+            Serial.printf("[DISPLAY] OLED SSD1306 detected at 0x%02X (SDA=%d, SCL=%d)\n", DisplayI2CAddr, sda, scl);
             break;
         }
 
@@ -254,11 +254,13 @@ bool display_init() {
         if (Wire.endTransmission() == 0) {
             DisplayI2CAddr = SSD1306_ADDR_2;
             IsDisplayDetected = true;
+            Serial.printf("[DISPLAY] OLED SSD1306 detected at 0x%02X (SDA=%d, SCL=%d)\n", DisplayI2CAddr, sda, scl);
             break;
         }
     }
 
     if (!IsDisplayDetected) {
+        Serial.println("[DISPLAY] Warning: No OLED display detected on tested I2C pins.");
         return false;
     }
 
@@ -337,6 +339,21 @@ void display_show_message(const char* title, const char* msg) {
     draw_rect(0, 0, 128, 64, 1);
     draw_string(14, 16, title, 1, 1);
     draw_string(14, 34, msg, 1, 1);
+    display_flush();
+}
+
+void display_show_wifi(const char* ssid, const char* ip, const char* url) {
+    if (!IsDisplayDetected) return;
+    display_clear();
+    draw_rect(0, 0, 128, 64, 1, false);
+    draw_string(18, 6, "CONFIG / OTA", 1, 1);
+    char buf[32];
+    snprintf(buf, sizeof(buf), "AP: %s", ssid);
+    draw_string(8, 20, buf, 1, 1);
+    snprintf(buf, sizeof(buf), "IP: %s", ip);
+    draw_string(8, 34, buf, 1, 1);
+    snprintf(buf, sizeof(buf), "URL: %s", url);
+    draw_string(8, 48, buf, 1, 1);
     display_flush();
 }
 
