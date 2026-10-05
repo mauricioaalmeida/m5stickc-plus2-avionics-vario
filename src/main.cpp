@@ -212,7 +212,9 @@ static void ble_task(void* pvParameter){
 		if (counter > 9) {
 			counter = 0;
 			LEDState = !LEDState;
+#if (pinLED >= 0)
 			digitalWrite(pinLED, LEDState);
+#endif
 			}
 		BatteryVoltage = adc_battery_voltage();
 #ifdef USE_BMP280

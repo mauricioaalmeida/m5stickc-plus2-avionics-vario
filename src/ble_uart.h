@@ -2,6 +2,7 @@
 #define BLEUART_H_
 
 void ble_uart_init();
+bool ble_uart_is_connected();
 void ble_uart_transmit_LK8EX1(int32_t rawPressurePa, int32_t altm, int32_t cps, int32_t tempC, float batVoltage);
 void ble_uart_transmit_LK8EX1(int32_t altm, int32_t cps, float batVoltage);
 

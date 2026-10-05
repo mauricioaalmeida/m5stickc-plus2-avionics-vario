@@ -30,14 +30,10 @@ if (-not $connected) {
     exit 1
 }
 
-Write-Host "Gravando bootloader, partitions, otadata (boot_app0), firmware (app0 + app1) e littlefs..." -ForegroundColor Cyan
-py -3.11 -m esptool --chip esp32 --port $port --baud 460800 write-flash -z --flash-mode dio --flash-freq 40m `
-    0x1000 $bootloader `
-    0x8000 $partitions `
-    0xe000 $boot_app0 `
+Write-Host "Gravando firmware (app0 + app1)..." -ForegroundColor Cyan
+py -3.11 -m esptool --chip esp32 --port $port --baud 115200 write-flash -z --flash-mode dio --flash-freq 40m `
     0x10000 $firmware `
-    0x1f0000 $firmware `
-    0x3d0000 $littlefs
+    0x1f0000 $firmware
 
 if ($LASTEXITCODE -eq 0) {
     Write-Host ""
