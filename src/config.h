@@ -2,6 +2,15 @@
 #define CONFIG_H_
 
 
+#ifdef M5STICKC_PLUS2
+#define pinPCCA		-1
+#define pinAudio	2   // Buzzer is GPIO 2 on M5StickC Plus2
+#define pinAudioEn	-1
+#define pinPwrSens	-1
+#define pinPwrCtrl	4   // GPIO 4 holds power on M5StickC Plus2
+#define pinLED		19  // Red LED is GPIO 19 on M5StickC Plus2
+#endif
+
 #ifdef HW_REV_A
 #define pinPCCA		32	// program/configure/calibrate/audio button
 #define pinAudio	2	// pwm beeper audio output

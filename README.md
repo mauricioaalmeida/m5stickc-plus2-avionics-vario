@@ -1,152 +1,222 @@
-# ESP32C3_BLUETOOTH_AUDIO_VARIO
+# ✈️ M5StickC Plus 2 Aviation Avionics & Audio Variometer
 
-<img src="docs/RevB_powered_on.jpg">
+[![PlatformIO](https://img.shields.io/badge/PlatformIO-ESP32--PICO--V3--02-orange.svg)](https://platformio.org/)
+[![M5Stack](https://img.shields.io/badge/Hardware-M5StickC%20Plus%202%20%28M5--Watch%29-red.svg)](https://m5stack.com/)
+[![Sensor](https://img.shields.io/badge/Baro-GY--63%20%28MS5611%29-blue.svg)](https://www.te.com/)
+[![BLE](https://img.shields.io/badge/Bluetooth-LK8EX1%2010Hz%20%28XCTrack%29-green.svg)](https://xctrack.org/)
+[![License](https://img.shields.io/badge/License-MIT-brightgreen.svg)](LICENSE)
 
+Simulador de instrumentos aviônicos de aviação civil e variômetro acústico de alta precisão para voo livre (parapente, asa delta, planadores e ultraleves) embarcado no **M5StickC Plus 2 (M5-Watch)** com módulo barométrico **GY-63 (MS5611)** e telemetria Bluetooth Low Energy (BLE) integrada para **XCTrack** e **XCSoar**.
 
- Accurate, zero-lag audio variometer using Kalman filter fusion of accelerometer and pressure sensor data. 
- This project uses the [KF4D kalman filter algorithm from the ESP32_IMU_GPS_BARO_VARIO project](https://github.com/har-in-air/ESP32_IMU_BARO_GPS_VARIO/blob/master/offline/kf/compare_kf2_kf3_kf4.ipynb).
+Inspirado no visual dos aviônicos clássicos e no projeto *DIY Avionics Simulator* de Mirko Pavleski, adaptado com renderização de alto desempenho com double-buffering (35-40 FPS sem cintilação).
 
- Other features :
-* WiFi Vario configuration via web page.
-* WiFi Over-the-air (OTA) firmware updates. 
-* Bluetooth LE transmission of [$LK8EX1 sentences](https://github.com/LK8000/LK8000/blob/master/Docs/LK8EX1.txt), to provide apps like [XCTrack](https://xctrack.org/) with 
-accurate barometric pressure altitude and climb-rate data.
-* Soft-switched power on/off.
-* 'No activity' time-out power down  to conserve battery life.
-* [2-layer PCB sized for standard Hammond 1551K enclosure](https://github.com/har-in-air/VhARIO-ESPC3).
+---
 
-# Software Build Environment 
-* Ubuntu 20.04 LTS AMDx64
-* [Visual Studio Code with PlatformIO plugin using Arduino framework](https://randomnerdtutorials.com/vs-code-platformio-ide-esp32-esp8266-arduino/) 
-* The file `platformio.ini` specifies the framework packages, toolchain and libraries used by the project. 
-* LittleFS partition for hosting HTML web page content.
+## 🌟 Funcionalidades Principais
 
-# Hardware
+* **Cockpit Glass Primário (PFD)**:
+  * Horizonte artificial com graduação dinâmica de arfagem (*pitch ladder* de 5° em 5°), ângulo de inclinação (*roll scale* com ponteiro triangular) e pista de pouso virtual tridimensional em perspectiva.
+  * Mira aeronáutica de referência fixa (*yellow waterline crosshair*).
+  * Fita rolante de altitude (*tape altimeter*) com tambor digital em fonte grande e legível.
+  * Indicador de altitude relativa de decolagem (**AGL**).
+  * Variômetro vertical em barra (*VSI - Vertical Speed Indicator*) com escala de subida/descida graduada.
+* **Múltiplos Modos de Exibição**:
+  * **Modo 0**: PFD Cockpit Completo (Horizonte + Fita de Altitude + VSI + Status BLE/Bateria).
+  * **Modo 1**: Horizonte Artificial Fullscreen com Overlay HUD.
+  * **Modo 2**: Altímetro Analógico Clássico de 3 ponteiros (centenas, milhares e dezenas de milhares de pés/metros) com janela digital central.
+  * **Modo 3**: Menu Interativo de Calibração Manual de Altitude com ajuste fino passo a passo e gravação na memória Flash NVS.
+* **Variômetro Sonoro Acústico Inteligente**:
+  * Algoritmo de tons de subida térmicos (*lift beeps*) e alarme contínuo de afundamento severo (*sink alarm*).
+  * **Deadband anti-ruído**: silêncio absoluto quando o dispositivo está parado sobre a mesa (sem beeps falsos).
+  * Tecla de atalho dedicada para Mudo / Som instantâneo (**MUTE / SND**).
+* **Calibração e Nivelamento Dinâmico**:
+  * **Auto-Tara de Inicialização**: nivela a atitude de voo (0° pitch, 0° roll) na posição de repouso ao ligar.
+  * **Tara de Nível Rápida**: segure o botão frontal a qualquer momento durante o voo para renivelar o horizonte à posição atual do braço.
+  * **Tara de Altitude Relativa (AGL = 0m)**: zere a referência de decolagem com um único clique.
+* **Telemetria Bluetooth Low Energy (BLE)**:
+  * Transmissão contínua a **10Hz** de sentenças `$LK8EX1` (pressão barométrica bruta, altitude corrigida, velocidade vertical em cm/s, temperatura e voltagem da bateria).
+  * Compatível com **XCTrack**, **XCSoar**, **Flyme**, **LK8000** e **SeeYou Navigator**.
+  * Reconhecimento automático via Nordic UART Service (NUS).
 
-* AI-Thinker ESP-C3-12F C3FN4 module (4MByte flash, Wi-Fi and Bluetooth LE)
-* CJMCU-117 module with MPU9250 9-DOF IMU and MS5611 barometric pressure sensor
-* TLV75533 LDO regulator, max current 500mA
-* KPEG006 broadband-audio piezo transducer
-* 74HC240 used as a push-pull piezo driver for louder volume 
-* MCP73871 Li-poly battery charger, max 500mA charging current
-* 1800mAHr Lipoly battery
-* Hammond 1551K standard size enclosure (80 x 40 x 20mm). 
-* On Rev B hardware, the USB C interface supports Li-Poly battery charging and program flash/debug.
-On the Rev A hardware, the USB C interface only supports battery charging. An external USB-UART adapter is required for flash/debug operation.
+---
 
-## Current Drain
+## 🛠️ Hardware e Ligações
 
-With Bluetooth LE disabled, current drain is ~30mA.
+| Componente | Função | Conexão no M5StickC Plus 2 |
+| :--- | :--- | :--- |
+| **M5StickC Plus 2** | MCU ESP32-PICO-V3-02, Display 240x135, Buzzer, IMU 6-Eixos, Bateria | Placa Principal |
+| **Módulo GY-63 (MS5611)** | Sensor barométrico de altíssima resolução (10-20 cm) | **Porta Grove A (Conector Vermelho/Preto)** |
 
-With Bluetooth LE enabled and transmitting LK8EX1 messages at 10Hz, current drain is ~85mA.
+### Pinagem da Porta Grove A (M5StickC Plus 2):
+* **Fio Amarelo (SDA)**: `GPIO 32`
+* **Fio Branco (SCL)**: `GPIO 33`
+* **Fio Vermelho (VCC)**: `5V` *(alimentado automaticamente pelo circuito boost interno)*
+* **Fio Preto (GND)**: `GND`
 
-# Software Build Notes
+> 💡 **Nota sobre o Sensor**: O firmware possui autodetecção dos endereços I2C `0x77` e `0x76` a 100/400 kHz e reconexão automática em segundo plano. Se o sensor não estiver conectado, o dispositivo permanece estável, fixado na altitude de referência, sem oscilações e 100% silencioso.
 
-## Build Steps
-* Select `Rev A` or `Rev B` hardware configuration options in the platformio.ini file.
-* The first time you flash the ESP32-C3 with this project code, select `PROJECT TASKS -> esp32c3 -> Platform -> Erase Flash`. This will wipe the entire flash including any previous partition tables. 
-* Next, select `Platform -> Build Filesystem Image`. This will build a LittleFS flash partition with the contents of the `/data` directory. The `/data` directory contains the static HTML and CSS files for the WiFi server webpage.
-* Next, select `Platform -> Upload Filesystem Image`. This will flash the LittleFS data partition to the ESP32-C3.
-* Next, select `General -> Clean All`, then `Build`. This is only required once, to download the source code for the required libraries and build them. 
-* If the libraries have already been downloaded and compiled, select `General -> Clean` to rebuild only the project application code.
+---
 
-`Rev A hardware`
-* Since the vario circuitry uses soft-switched power control, it helps to have a debug interface that includes both the serial port pins (RX,TX,GND) as well as the `PWR` button pins. Connect a slide switch or jumper across the `PWR` button pins. 
-Ensure the vario is switched off. When you want to flash or erase the ESP32-C3, press and hold the `PCCA` button while turning the slide switch/jumper on. When done flashing, turn off the slide switch/jumper. Without this switch/jumper, you would have to keep the `PWR` button pressed for the full duration of the erase & flash process.
+## 🎮 Guia Completo dos Botões
 
-* Select `Build` and then `Upload and Monitor` to build and flash the application firmware binary.
+O M5StickC Plus 2 possui 3 botões físicos:
+* **Botão A (Frontal M5)**: GPIO 37
+* **Botão B (Lateral Inferior)**: GPIO 39
+* **Botão PWR / C (Lateral Superior / Ligar)**: GPIO 35
 
-* Ensure the serial debug monitor is visible, then reset or power-cycle the ESP32-C3 module. 
+```
++------------------------------------------------------+
+| [PWR/C] (Lateral Superior)                           |
+|                                                      |
+|   +-----------------------+      +---------------+   |
+|   |                       |      |               |   |
+|   |      TELA LCD         |      |    [Btn A]    |   |
+|   |      240 x 135        |      |    (Frontal)  |   |
+|   |                       |      |               |   |
+|   +-----------------------+      +---------------+   |
+|                                                      |
+| [Btn B] (Lateral Inferior)                           |
++------------------------------------------------------+
+```
 
-`Rev B hardware`
-* Ensure the vario is switched off. Connect the USB cable from your PC to the vario. Press and hold the PCCA button. Now close the flash/debug jumper or slide switch (JP1 or SW2). Release the PCCA button. You will see the CDC port show up as a new serial port. On Ubuntu it will be `/dev/ttyACMx` instead of `/dev/ttyUSBx`. Set this new port as the upload and monitor port in platformio.ini.
+### 1. Modos Normais de Voo (PFD / HUD / Dial)
 
-* Select `Build` and then `Upload` to build and flash the application firmware binary.
+| Botão | Ação | Função |
+| :--- | :--- | :--- |
+| **Botão A (Frontal)** | **Toque Curto (Click)** | **Zera Altitude AGL**: Define a altitude atual como referência de decolagem (`AGL = 0m`). |
+| **Botão A (Frontal)** | **Segurar (> 1s)** | **Nivelar Horizonte**: Calibra a atitude zero (0° pitch / 0° roll) na posição atual. |
+| **Botão A (Frontal)** | **Duplo Clique** | **Ligar / Desligar Modo DEMO**: Ativa/desativa simulação térmica. |
+| **Botão B (Lateral)** | **Toque Curto (Click)** | **Mute / Unmute**: Liga ou desliga o som do variômetro. |
+| **Botão B (Lateral)** | **Segurar (> 1s)** | **Alternar Telas**: Alterna em loop: `PFD` ➔ `HUD` ➔ `Dial` ➔ `Menu de Ajuste` ➔ `PFD`. |
+| **Botão B (Lateral)** | **Duplo Clique** | **Ligar / Desligar Modo DEMO** (Atalho alternativo). |
+| **Botão PWR (Lateral)**| **Toque Curto (Click)** | **Ligar / Desligar Modo DEMO**. |
 
-* To see  serial debug prints and prompts on boot, open the flash/debug jumper / slide switch (JP1/SW2) to turn off the vario. Select `Monitor` in VSC and then switch on the vario using the `PWR` button.  
+### 2. Modo 3: Menu Interativo de Ajuste de Altitude
 
-* For both Rev A and Rev B hardware : After a full chip erase and firmware upload, there is no calibration data. So you will see a calibration error message. Follow the prompts to calibrate both accelerometer and gyroscope. Once complete, the calibration parameters will be saved to flash.
+Ao entrar no Menu de Ajuste, a edição se inicia na altitude inteira atual:
 
-[This is a startup serial monitor log after a full flash erase, i.e. no calibration parameters.](docs/first_boot_log.txt) 
-* The gyroscope is re-calibrated each time on power-up. You should leave the vario un-disturbed when you hear the count-down beeps for gyroscope calibration. If the vario is disturbed during the gyro calibration process, it will use the last saved gyro calibration parameters.
+| Botão | Ação | Função |
+| :--- | :--- | :--- |
+| **Botão A (Frontal)** | **Toque Curto (Click)** | **Aumenta exatamente 1 metro (+1m)** na altitude alvo. |
+| **Botão B (Lateral)** | **Toque Curto (Click)** | **Diminui exatamente 1 metro (-1m)** na altitude alvo. |
+| **Botão A (Frontal)** | **Segurar (> 1s)** | **SALVAR**: Grava o valor na memória Flash NVS, recalibra a pressão QNH correspondente e retorna ao PFD. |
+| **Botão PWR (Lateral)**| **Toque Curto (Click)** | **CANCELAR**: Sai do menu sem salvar alterações. |
 
+---
 
-# WiFi Configuration
+## 📱 Conexão com o XCTrack (Android)
 
-To put the vario into WiFi AP server mode, switch on the vario and immediately press and hold the `PCCA` button. When you hear a confirmation tone, release the button. 
+1. Ligue o M5StickC Plus 2. A barra superior indicará `BLE:ADV`.
+2. Abra o **XCTrack** no seu smartphone ou tablet Android.
+3. Vá em **Preferências (Configurações)** ➔ **Conexão & Sensores** ➔ **Sensor Externo**.
+4. Selecione **Bluetooth LE (Low Energy)**.
+5. Toque em **Procurar Dispositivos** e selecione **`M5-VARIO`**.
+6. O protocolo será detectado automaticamente como **Nordic UART / LK8EX1**.
+7. Na tela do M5StickC Plus 2, o indicador mudará para **`BLE:XCT`** em verde, confirmando a transmissão de altitude e VSI em tempo real!
 
-Connect to the WiFi Access Point `Vario-AP`, no password needed. 
+---
 
-Open the url `http://192.168.4.1` in a browser.
-You can use `http://vario.local` with any OS that has mDNS support. MacOS has built-in support. For Ubuntu, install Avahi. For Windows, install Bonjour.
+## 💻 Compilação e Gravação com PlatformIO
 
-<img src="docs/wifi_config_webpage.png">
+### Pré-requisitos
+* [Visual Studio Code](https://code.visualstudio.com/) com a extensão **PlatformIO IDE** instalada.
+* Cabo USB-C conectado ao M5StickC Plus 2.
 
-## Configuration Options
+### Comandos pelo Terminal
+```bash
+# Clone ou acesse a pasta do projeto
+cd c:/_MAA/Desenv/ESP32C3_BLUETOOTH_AUDIO_VARIO-main
 
-### WiFi Credentials
-Enter your home WiFi Access Point SSID and password so that the vario can connect to the access point as a station. Then you can just enter the webpage url `http://vario.local` to access the vario configuration web page.
+# Compilar o firmware para o ambiente M5StickC Plus 2
+pio run -e m5stickc_plus2
 
-If the external Access Point is not configured or the configured access point is not available, e.g. on the launch site, the vario will configure itself as a standalone Wifi Access Point with SSID `Vario-AP`, no password. You can use your phone or tablet to connect first to this access point. Then access the webpage url `http://vario.local` as before.
+# Gravar o firmware na placa conectada (ex: COM8)
+pio run -e m5stickc_plus2 -t upload --upload-port COM8
 
-### Audio Tone configuration
+# Abrir o monitor serial para verificar os logs de boot
+pio device monitor -p COM8 -b 115200
+```
 
-<img src="docs/climbsink_audio_response_graph.png">
+---
 
-The climb tone threshold should be configured for what you consider the minimum climbrate that you can turn in without losing height. The range is +20cm/s to +100cm/s.
+## 🚀 Como Subir o Projeto para o seu GitHub
 
-Since a paraglider has a 'hands-up' sink rate of approximately -1m/s in still air, anything more than this indicates rising air. 
-The zero tone is used to indicate air that is rising, but not strong enough for aggressive turns. The range is -20cm/s to +20cm/s. 
+Para publicar seu repositório completo com código e documentação no seu perfil do GitHub:
 
-The sink tone is used to indicate sinking air, not a sinking glider. The range is -400cm/s to -100cm/s.
+### Passo 1: Crie o repositório no site do GitHub
+1. Acesse [github.com/new](https://github.com/new).
+2. Dê um nome ao repositório (ex: `m5stickc-plus2-avionics-vario`).
+3. Deixe o repositório como **Público** (ou Privado, se preferir).
+4. **Não marque** as opções de adicionar README ou .gitignore (já temos no projeto local).
+5. Clique em **Create repository**.
+6. Copie a URL do seu repositório (ex: `https://github.com/SEU_USUARIO/m5stickc-plus2-avionics-vario.git`).
 
-Note that these thresholds are purely personal choices, depending on how 'talkative' you want the vario to be.
+### Passo 2: Execute os comandos no terminal do projeto
+Abra o terminal (PowerShell ou Bash) na pasta do projeto e rode:
 
-The crossover climbrate is used to adjust the frequency discrimination. The vario allocates 3 octaves of audio bandwidth to climbrates below this threshold, and 1 octave
-above the threshold. So if the expected average thermal strength is +5m/s, set the threshold to 500.
+```bash
+# 1. Verifique o status dos arquivos
+git status
 
-### Kalman Filter configuration
-Set the `variance` parameter lower for conditions with soft, wide and smooth-edged thermals. Set the parameter higher for conditions with strong, narrow and hard-edged thermals.
+# 2. Crie uma branch principal limpa (main)
+git branch -M main
 
-The `adapt` parameter will probably be removed after flight trials. Higher values add more uncertainty into the Kalman filter so it can respond to high acceleration transitions quickly, while maintaining a high degree of damping in zero acceleration conditions.
+# 3. Adicione todos os arquivos modificados e o novo README.md
+git add platformio.ini src/config.h src/m5_avionics_vario.cpp README.md .gitignore
 
-### Inactivity Time-out
-The vario will power off automatically to save battery life if it does not detect climb/sink rates beyond a minimum threshold within a specified interval (specified in minutes). If you often stand on the launch site for several minutes, hooked-up to the glider and waiting for launch conditions to improve, use a larger time-out.
+# 4. Faça o commit com uma mensagem descritiva
+git commit -m "feat: M5StickC Plus2 Aviation Avionics Simulator, GY-63 Vario, and BLE LK8EX1"
 
-### Bluetooth LK8EX1
-If you enable this option, the vario will transmit $LK8EX1 sentences using the Bluetooth LE protocol at 10Hz. The Bluetooth device name is `BLE-Vario`.
+# 5. Adicione o seu repositório remoto do GitHub (substitua com a sua URL)
+git remote add origin https://github.com/SEU_USUARIO/m5stickc-plus2-avionics-vario.git
 
-`XCDisplay` app on Apple iPhone connected to the vario, displaying pressure altitude and climbrate.
-<img src="docs/XCDisplay.png">
+# 6. Envie o código para o GitHub
+git push -u origin main
+```
 
-# Usage
+---
 
-## Power On 
-To power on, press the `PWR` button and hold (~1 second) until you see the power/bluetooth LED turn on. Release.
+## 🏪 Como Publicar no Marketplace do M5Stack (M5Burner)
 
-The vario will first indicate the battery charge status with a series of long beeps. 5 beeps for fully charged, 1 beep for discharged.
+O **M5Burner** é a loja e gerenciador oficial de firmwares da M5Stack, permitindo que qualquer usuário no mundo instale seu projeto com 1 clique!
 
-After a pause, the vario will indicate the countdown to gyro calibration with a series of 10 shorter beeps. You should ensure the vario is left undisturbed, in any orientation (do not hold it in your hand). At the end of the countdown and a brief pause, you may hear an initial squawk as the filter initializes, but it should settle down in a few seconds. Now the vario is operational and providing audio feedback.
+### Passo 1: Gerar o arquivo binário único unificado (.bin)
+O M5Burner requer uma imagem de firmware completa (ou os arquivos separados com seus respectivos endereços). Para gerar a imagem unificada:
 
-If you want to force accelerometer re-calibration, press the `PCCA` button during the gyro calibration countdown. Now the vario will start a 50 short beep countdown at a fast rate. At this point you should place the vario flat on a horizontal surface (confirm with a bubble level if possible) without any disturbance, vibrations etc. Do not hold or press down on the vario case. At the end of the 50 beeps, the accelerometer will be calibrated, and then the countdown to gyro calibration will start.
+1. Compile o projeto via PlatformIO:
+   ```bash
+   pio run -e m5stickc_plus2
+   ```
+2. O PlatformIO gera os seguintes binários em `.pio/build/m5stickc_plus2/`:
+   * `bootloader.bin` (endereço `0x1000`)
+   * `partitions.bin` (endereço `0x8000`)
+   * `boot_app0.bin` (endereço `0xe000`)
+   * `firmware.bin` (endereço `0x10000`)
 
-### Power/Bluetooth LED
-If Bluetooth transmission is disabled, the power/bluetooth LED will stay on.
+3. Para mesclar em um único arquivo `m5_avionics_vario_merged.bin`:
+   ```bash
+   python -m esptool --chip esp32 merge_bin -o m5_avionics_vario_merged.bin --flash_mode dio --flash_freq 40m --flash_size 8MB 0x1000 .pio/build/m5stickc_plus2/bootloader.bin 0x8000 .pio/build/m5stickc_plus2/partitions.bin 0xe000 ~/.platformio/packages/framework-arduinoespressif32/tools/partitions/boot_app0.bin 0x10000 .pio/build/m5stickc_plus2/firmware.bin
+   ```
 
-If Bluetooth transmission is enabled, the power/bluetooth LED will start blinking once every 2 seconds after transmission starts.
+### Passo 2: Publicar no M5Burner
+1. Baixe e instale o [M5Burner](https://m5stack.com/pages/download).
+2. Abra o M5Burner e faça login com a sua conta M5Stack (canto superior direito).
+3. No menu lateral, selecione a categoria do seu dispositivo: **StickC**.
+4. Clique no botão superior direito **Publish** (ou **User Custom** / **Upload**).
+5. Preencha as informações do projeto:
+   * **Title**: `M5StickC Plus 2 Avionics Horizon & Variometer`
+   * **Category**: `Aviation` / `Sports` / `Sensors`
+   * **Device**: `M5StickC Plus 2`
+   * **Description**: Descreva as funções (Horizonte Artificial, Vario GY-63, BLE LK8EX1 para XCTrack, calibração NVS).
+   * **Screenshots / Cover**: Adicione fotos do dispositivo em funcionamento no relógio.
+   * **Firmware File**: Anexe o arquivo `m5_avionics_vario_merged.bin` gerado.
+6. Clique em **Submit**. Após uma rápida validação da M5Stack, seu projeto estará disponível publicamente para a comunidade global!
 
-### Audio Mute 
-When the vario has finished initialization and is providing vario audio feedback, a brief press of the `PCCA` button  will toggle the audio on / off.
+---
 
-This is convenient if you have set the zero-tone threshold to a negative value or close to zero and don't want the distraction of a beeping vario while you are hooked in to the glider and waiting to launch.
+## 📜 Licença e Créditos
 
-## Power Off
-To power off, press the `PWR` button and hold (~2 seconds) until you hear a confirmation audio tone. If the power/bluetooth LED was on, it will turn off as well. Release.
-
-# Credits
-
-Prototype design, component sourcing, PCB assembly and testing in collaboration with Benoit Arnal.
- 
-
-
-
+* **Algoritmo de Horizonte Artificial**: Inspirado no projeto original *DIY Avionics Simulator* por [Mirko Pavleski](https://projecthub.arduino.cc/mircemk/diy-avionics-simulator-with-esp32-artificial-horizon-compass-altimeter-f39fac).
+* **Filtro de Fusão Kalman 4D**: Algoritmo KF4D baseado em *ESP32_IMU_GPS_BARO_VARIO* por [har-in-air](https://github.com/har-in-air/ESP32_IMU_BARO_GPS_VARIO).
+* **Bibliotecas**: [M5Unified](https://github.com/m5stack/M5Unified), [M5GFX](https://github.com/m5stack/M5GFX), [NimBLE-Arduino](https://github.com/h2zero/NimBLE-Arduino).
+* **Licença**: MIT. Sinta-se livre para usar, modificar e compartilhar!
