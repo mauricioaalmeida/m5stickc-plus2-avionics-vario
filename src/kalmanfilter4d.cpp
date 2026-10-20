@@ -95,6 +95,7 @@ void kalmanFilter4d_configure(float aVariance, float kAdapt, float zInitial, flo
 //  | 0   0   0       1      |
 //
 void kalmanFilter4d_predict(float dt) {
+	if (dt > 0.1f || dt <= 0.0f) dt = 0.02f;
 #ifdef BARO_ONLY_MODE
 	// 2D Process model:
 	// z_k = z_k-1 + v_k-1 * dt
@@ -198,6 +199,17 @@ void kalmanFilter4d_update(float zm, float am, float* pz, float* pv) {
 	Pzz -= Kz * Pzz;
 	Pzv -= Kz * Pzv;
 	Pvv -= Kv * Pzv;
+
+	if (Pzz < 1.0f) Pzz = 1.0f;
+	if (Pvv < 1.0f) Pvv = 1.0f;
+
+	if (isnan(State.z) || isinf(State.z) || fabsf(State.z) > 5000000.0f) {
+		State.z = zm;
+		State.v = 0.0f;
+		Pzz = 1500.0f;
+		Pvv = 1500.0f;
+		Pzv = 0.0f;
+	}
 
 	*pz = State.z;
 	*pv = State.v;

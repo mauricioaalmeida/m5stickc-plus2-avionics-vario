@@ -6,3 +6,14 @@ compile_commands.json
 *.elf
 *.csv.bak
 kicad/espc3-vario/espc3-vario-backups/**
+scratch/
+extract.py
+crop_*.jpg
+d1_mini_enhanced.jpg
+user_*.png
+bl_*.png
+left_pins.png
+right_pins.png
+chip.png
+bl.jpg
+br.jpg
